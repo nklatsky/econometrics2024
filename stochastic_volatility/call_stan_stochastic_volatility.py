@@ -7,13 +7,15 @@ from cmdstanpy import CmdStanModel
 import numpy as np
 import pandas as pd
 
+import os
+print("Current working directory:", os.getcwd())
 
-data_path = "data/kaggle_fx_data_log_diff.csv"
+data_path = "project/code/fx_data_approx_percent_returns.csv"
 data = pd.read_csv(data_path)
-jpy_returns = data["JPY"].values
 
 # Define dependent variable
-y = jpy_returns
+y = data["DXY"].values
+
 
 # Load Stan model
 model = CmdStanModel(stan_file='stochastic_volatility.stan')
