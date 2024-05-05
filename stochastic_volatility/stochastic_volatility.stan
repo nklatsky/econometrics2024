@@ -1,5 +1,8 @@
 // From Stan website: https://mc-stan.org/docs/2_21/stan-users-guide/stochastic-volatility-models.html
 
+// Note: substitute more imformative priors where appropriate
+
+
 data {
   int<lower=0> T;   // # time points (equally spaced)
   vector[T] y;      // mean corrected return at time t
