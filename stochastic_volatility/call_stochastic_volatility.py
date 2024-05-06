@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+
+# Note: Filepaths are relative to the ECONOMETRICS2024 directory
+
 import os
 print("current working directory:", os.getcwd())
 
@@ -10,13 +13,13 @@ import numpy as np
 import pandas as pd
 
 
-data_path = "econometrics/econometrics2024/project/code/fx_data_approx_percent_returns.csv"
+data_path = "../project/code/fx_data_approx_percent_returns.csv"
 data = pd.read_csv(data_path)
 
 # Define dependent variable
 y = data["DXY"].values
 
-stan_filepath = "econometrics/econometrics2024/project/code/stochastic_volatility/stochastic_volatility.stan"
+stan_filepath = "../project/code/stochastic_volatility/stochastic_volatility.stan"
 
 # Load Stan model
 model = CmdStanModel(stan_file=stan_filepath)

@@ -26,12 +26,15 @@ transformed parameters {
 
 
 model {
-  phi ~ uniform(-1, 1);
-  sigma ~ cauchy(0, 5); 
-  mu ~ cauchy(0, 10);
 
-  h_std ~ std_normal(); // (for speed optimization)
+  phi ~ normal(0.90, 0.1) T[-1, 1];  // Truncated Normal Prior (formerly: phi ~ uniform(-1, 1);)
+
+  sigma ~ sigma ~ inv_gamma(3, 2);   // Formerly cauchy(0, 5); 
+
+  mu ~  std_normal();                // Formerly cauchy(0, 10);
+
+  h_std ~ std_normal();              // (for speed optimization)
   
-  y ~ normal(0, exp(h / 2));  // Vectorized
+  y ~ normal(0, exp(h / 2));         // Vectorized
 
 }
