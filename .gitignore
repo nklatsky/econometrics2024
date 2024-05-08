@@ -1,8 +1,8 @@
 data/
 
-project\new_dataset
-project\code\data
+project/new_dataset/
+project/code/data/
 
-project\code\garch\sampler_outputs
-project\code\stochastic_volatility\sampler_outputs
+project/code/garch/sampler_outputs/
+project/code/stochastic_volatility/sampler_outputs/
 
