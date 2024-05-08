@@ -1,3 +1,7 @@
-project/code/stochastic_volatility/outputs/
-
 data/
+
+project\code\data
+
+project\code\garch\sampler_outputs
+project\code\stochastic_volatility\sampler_outputs
+
