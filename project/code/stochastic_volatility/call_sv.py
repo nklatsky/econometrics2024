@@ -18,6 +18,7 @@ data = pd.read_csv(data_path)
 
 # Define dependent variable
 y = data["DXY"].values
+y = y - np.mean(y) # De-mean returns
 
 stan_filepath = "sv.stan"
 

@@ -18,6 +18,7 @@ data = pd.read_csv(data_path)
 
 # Define dependent variable
 y = data["DXY"].values
+y = y - np.mean(y) # De-mean returns
 
 stan_filepath = "garch.stan"
 
@@ -27,7 +28,8 @@ model = CmdStanModel(stan_file=stan_filepath)
 # Prepare data for Stan model
 data = {
     'T': len(y),
-    'y': y
+    'y': y,
+    'sigma1': 1
 }
 
 # Fit the model
@@ -38,26 +40,13 @@ print(fit.summary())
 # Print diagnosis
 print(fit.diagnose())
 
-## Error checking
-## Access the samples for the parameters of interest
-# h_samples = fit.stan_variable("h")
-# sigma_samples = fit.stan_variable("sigma")
-# scale_samples = fit.stan_variable("scale")
-# #
+## Diagnostics
+def write_samples_to_csv(fit, variables, output_dir):
+    os.makedirs(output_dir, exist_ok=True)
+    for variable in variables:
+        samples = fit.stan_variable(variable)
+        samples_df = pd.DataFrame(samples)
+        samples_df.to_csv(os.path.join(output_dir, f"{variable}_samples.csv"), index=False)
 
-## Save samples to CSV 
-## Create folder to store sampler outputs (if it doesn't exist)
-# os.makedirs("outputs", exist_ok=True)
-
-## convert to DataFrame
-# h_samples = pd.DataFrame(h_samples)
-# sigma_samples = pd.DataFrame(sigma_samples)
-# scale_samples = pd.DataFrame(scale_samples)
-
-## Write to CSV
-# h_samples.to_csv("outputs/h_samples.csv", index=False)
-# sigma_samples.to_csv("outputs/sigma_samples.csv", index=False)
-# scale_samples.to_csv("outputs/scale_samples.csv", index=False)
-
-
-
+variables_to_write = ["mu", "alpha1", "beta1", "mu_sim", "alpha1_sim", "beta1_sim", "sigma_sim", "y_sim"]
+write_samples_to_csv(fit, variables_to_write, "sampler_outputs")
