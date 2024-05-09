@@ -70,5 +70,29 @@ generated quantities {
     y_post[t] = normal_rng(0, sqrt(mu + alpha1 * pow(y_post[t-1], 2) + beta1 * pow(sigma_train[t-1], 2)) + 1e-10);
   }
 
+
+
+// Out of Sample Forecasting
+  vector[T_test] y_pred;  // Posterior predictive simulated data for training set
+  vector[T_test] sigma_pred; // Volatility estimates for the test data
+
+  sigma_pred[1] = sqrt(mu + alpha1 * pow(y_train[T_train], 2) + beta1 * pow(sigma_train[T_train], 2)) + 1e-10;
+  y_pred[1] = normal_rng(0, sigma_pred[1]);  // Forecast the first test data point based on the last training data point
+
+  for (t in 2:T_test) {
+    sigma_pred[t] = sqrt(mu + alpha1 * pow(y_test[t-1], 2) + beta1 * pow(sigma_pred[t-1], 2)) + 1e-10;
+    y_pred[t] = normal_rng(0, sigma_pred[t]);  // Forecast using the true previous y_test value
+  }
+
+
+  // Log-Likelihood of Observed Test Set Data Under Predictive Posterior distribution
+  vector[T_test] log_likelihood; // For each forecast period
+
+  for (t in 1:T_test) {
+
+    log_likelihood[t] = normal_lpdf(y_test[t] | 0, sigma_pred[t]); // log-likelihood of the t_th observation of y_test given the posterior predictive density defined by sigma_pred[t]
+  
+  }
+
 }
 
