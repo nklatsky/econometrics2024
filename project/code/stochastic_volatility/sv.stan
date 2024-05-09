@@ -114,9 +114,28 @@ generated quantities {
     y_post[t] = normal_rng(0, scale_post[t]);
   }
      
+// Out of Sample Forecasting
+  vector[T_test] y_pred;   // Forecasts for the test data
+  vector[T_test] h_pred;   // Log volatilities for the forecasts
+  vector[T_test] scale_pred; // Scale parameters for the forecasts
 
+  h_pred[1] = mu + (phi * (h_train[T_train] - mu)) + sigma * std_normal_rng();  // Init first forecast using last h_train
+  scale_pred[1] = exp(h_pred[1] / 2) + 1e-10;  // Compute scale for the first forecast
+  y_pred[1] = normal_rng(0, scale_pred[1]);  // Forecast the first test data point
 
+  for (t in 2:T_test) {
+    h_pred[t] = mu + (phi * (h_pred[t-1] - mu)) + sigma * std_normal_rng();  // Sequential forecast
+    scale_pred[t] = exp(h_pred[t] / 2) + 1e-10;  // Compute scale for each forecast
+    y_pred[t] = normal_rng(0, scale_pred[t]);  // Forecast subsequent test data points
+  }
 
+// Log-Likelihood of Observed Test Set Data Under Predictive Posterior distribution
+  vector[T_test] log_likelihood; // For each forecast period
 
+  for (t in 1:T_test) {
+
+    log_likelihood[t] = normal_lpdf(y_test[t] | 0, scale_pred[t]); // log-likelihood of the t_th observation of y_test given the posterior predictive density defined by scale_pred[t]
+  
+  }
 
 }

@@ -59,5 +59,5 @@ def write_samples_to_csv(fit, variables, output_dir):
         samples_df.to_csv(os.path.join(output_dir, f"{variable}_samples.csv"), index=False)
 
 # variables_to_write = ["phi", "sigma", "mu", "h_std", "mu_sim", "phi_sim", "sigma_sim", "h_std_sim", "h_sim", "scale_sim", "y_sim", "y_post"]
-variables_to_write = ["y_sim", "y_post"]
+variables_to_write = ["y_sim", "y_post", "y_pred", "log_likelihood"]
 write_samples_to_csv(fit, variables_to_write, "sampler_outputs")
