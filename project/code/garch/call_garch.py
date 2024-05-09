@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 
-# Note: Filepaths are relative to the ECONOMETRICS2024 directory
-
 import os
 print("current working directory:", os.getcwd())
 
@@ -13,7 +11,7 @@ import numpy as np
 import pandas as pd
 
 
-data_path = "../data/fx_data_approx_percent_returns.csv"
+data_path = "../../data/DXY_approx_percent_returns.csv"
 data = pd.read_csv(data_path)
 
 # Define dependent variable
@@ -48,5 +46,7 @@ def write_samples_to_csv(fit, variables, output_dir):
         samples_df = pd.DataFrame(samples)
         samples_df.to_csv(os.path.join(output_dir, f"{variable}_samples.csv"), index=False)
 
-variables_to_write = ["mu", "alpha1", "beta1", "mu_sim", "alpha1_sim", "beta1_sim", "sigma_sim", "y_sim"]
+# variables_to_write = ["mu", "alpha1", "beta1", "mu_sim", "alpha1_sim", "beta1_sim", "sigma_sim", "y_sim", "y_post"]
+variables_to_write = ["y_sim", "y_post"]
 write_samples_to_csv(fit, variables_to_write, "sampler_outputs")
+

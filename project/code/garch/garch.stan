@@ -22,12 +22,13 @@ transformed parameters {
 model {
 
 // Priors
-  mu ~ inv_gamma(3, 2);          // Prior for the baseline variance component
-  alpha1 ~ beta(2, 5);         // Prior for the coefficient of past squared residuals
-  beta1 ~ beta(5, 2);          // Prior for the coefficient of past variances
+  mu ~ inv_gamma(1.5, 0.25);          // Prior for the baseline variance component
+  alpha1 ~ beta(2, 5);           // Prior for the coefficient of past squared residuals
+  beta1 ~ beta(5, 2);            // Prior for the coefficient of past variances
 
 // Likelihood
   y ~ normal(0, sigma);
+
 }
 
 
@@ -35,7 +36,7 @@ generated quantities {
 
 // Prior Predictive Check
 
-  real<lower=0> mu_sim = inv_gamma_rng(3, 2);
+  real<lower=0> mu_sim = inv_gamma_rng(1.5, 0.25);
   real<lower=0, upper=0.99> alpha1_sim = beta_rng(2, 5);
   real<lower=0, upper=1 - alpha1_sim> beta1_sim;
 
@@ -58,6 +59,14 @@ generated quantities {
 
 // Posterior Predictive Check
 
+  vector[T] y_post;  // This will hold the posterior predictive simulated data
+
+  // Using the posterior samples to simulate new data
+  y_post[1] = normal_rng(0, sigma[1]);  // Initial value based on fitted sigma
+  
+  for (t in 2:T) {
+    y_post[t] = normal_rng(0, sqrt(mu + alpha1 * pow(y_post[t-1], 2) + beta1 * pow(sigma[t-1], 2)) + 1e-10);
+  }
 
 }
 
