@@ -4,26 +4,29 @@
 
 
 data {
-  int<lower=0> T;   // # time points (equally spaced)
-  vector[T] y;      // mean corrected return at time t
+  int<lower=0> T_train;   // len of training data
+  vector[T_train] y_train;      // training data
+
+  int<lower=0> T_test;  // len of test data
+  vector[T_test] y_test; // len of test data
 }
 
 parameters {
   real mu;                     // mean log volatility
   real<lower=-1, upper=1> phi; // persistence of volatility (auto-regression coefficient)
   real<lower=0.01, upper=3> sigma;         // white noise shock scale (set lower bound slightly above zero to avoid computational issues, restrict upper bound to avoid extreme values ())
-  vector[T] h_std;             // std log volatility time t (for speed optimization)
+  vector[T_train] h_std_train;             // std log volatility time t (for speed optimization)
 }
 
 
 transformed parameters {
-  vector[T] h = h_std * sigma;  // now h ~ normal(0, sigma)
-  h[1] /= sqrt(1 - phi * phi);  // rescale h[1]
-  h += mu;
-  for (t in 2:T)
-    h[t] += phi * (h[t-1] - mu);
+  vector[T_train] h_train = h_std_train * sigma;  // now h ~ normal(0, sigma)
+  h_train[1] /= sqrt(1 - phi * phi);  // rescale h_train[1]
+  h_train += mu;
+  for (t in 2:T_train)
+    h_train[t] += phi * (h_train[t-1] - mu);
 
-  vector[T] scale = exp(h / 2) + 1e-10 ;  // Compute scale parameters for the normal distribution (in transformed parameters block to enable inspection) ((also add 1e-10 to avoid errors))
+  vector[T_train] scale = exp(h_train / 2) + 1e-10 ;  // Compute scale parameters for the normal distribution (in transformed parameters block to enable inspection) ((also add 1e-10 to avoid errors))
 }
 
 
@@ -35,25 +38,27 @@ model {
 
   mu ~  normal(-0.5,1);                // Formerly cauchy(0, 10);
 
-  h_std ~ std_normal();              // (for speed optimization)
+  h_std_train ~ std_normal();              // (for speed optimization)
   
-  y ~ normal(0, scale);         // Vectorized
+  y_train ~ normal(0, scale);         // Vectorized [on training set]
 
 }
 
 
 generated quantities {
 
+  // Prior Predictive Check
+
   real mu_sim = normal_rng(-0.5, 1);                     // Sample mu from its prior
   real phi_sim;                                       // Declare phi_sim
   real sigma_sim;                          // Declare sigma_sim
-  vector[T] h_std_sim;                                // Declare the vector for standard normal variates
-  vector[T] h_sim;                                    // Simulated log volatility
-  vector[T] scale_sim;                                // Simulated scale for y_sim
-  vector[T] y_sim;                                    // Simulated data based on the prior
+  vector[T_train] h_std_sim;                                // Declare the vector for standard normal variates
+  vector[T_train] h_sim;                                    // Simulated log volatility
+  vector[T_train] scale_sim;                                // Simulated scale for y_sim
+  vector[T_train] y_sim;                                    // Simulated data based on the prior
   
   // Fill h_std_sim with standard normal random variates
-  for (i in 1:T) {
+  for (i in 1:T_train) {
     h_std_sim[i] = std_normal_rng();
   }
 
@@ -77,14 +82,41 @@ generated quantities {
   h_sim[1] += mu_sim;
   scale_sim[1] = exp(h_sim[1] / 2) + 1e-10;
 
-  for (t in 2:T) {
+  for (t in 2:T_train) {
     h_sim[t] = h_std_sim[t] * sigma_sim;
     h_sim[t] += phi_sim * (h_sim[t-1] - mu_sim) + mu_sim;
     scale_sim[t] = exp(h_sim[t] / 2) + 1e-10;
   }
 
   // Simulate y_sim from the generated scale parameters
-  for (t in 1:T) {
+  for (t in 1:T_train) {
     y_sim[t] = normal_rng(0, scale_sim[t]);
   }
+
+
+  // Posterior Predictive Check
+  vector[T_train] y_post;  // To hold posterior predictive simulated data
+  vector[T_train] h_post;  // To hold posterior predictive log volatilities
+  vector[T_train] scale_post;  // Scale parameters for the normal distribution based on the posterior
+  
+  h_post[1] = h_train[1];  // Starting from the first fitted volatility in training set
+  scale_post[1] = exp(h_post[1] / 2) + 1e-10;  // Computing the scale
+  
+  // Simulate y_post[1] from the normal distribution with mean 0 and scale_post[1]
+  y_post[1] = normal_rng(0, scale_post[1]);
+  
+  for (t in 2:T_train) {
+    // Update h_post based on posterior sampled parameters
+    h_post[t] = phi * (h_post[t-1] - mu) + mu + sigma * std_normal_rng();
+    scale_post[t] = exp(h_post[t] / 2) + 1e-10;  // Compute the scale parameter
+
+    // Simulate y_post[t] from the normal distribution with mean 0 and the updated scale_post[t]
+    y_post[t] = normal_rng(0, scale_post[t]);
+  }
+     
+
+
+
+
+
 }
